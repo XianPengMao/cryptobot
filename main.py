@@ -64,7 +64,9 @@ elif mode == 'backtest':
             interval
         )
     )
-    Backtest(exchange, period_start, period_end, interval)
+    backtest = Backtest(exchange, period_start, period_end)
+    backtest.run()
+    sys.exit(0)
 
 elif mode == 'import':
     period_start = config('PERIOD_START')

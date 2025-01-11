@@ -1,24 +1,14 @@
-import sys
 from datetime import datetime
-from models.dataset import Dataset
+from exchanges.exchange import Exchange
 
 
 class Importer:
-    def __init__(self, exchange, period_start: datetime, period_end=None, interval=60, *args, **kwargs):
+    def __init__(self, exchange: Exchange, period_start: str, period_end: str, interval: int):
         self.exchange = exchange
+        self.period_start = datetime.strptime(period_start, "%Y-%m-%dT%H:%M")
+        self.period_end = datetime.strptime(period_end, "%Y-%m-%dT%H:%M")
         self.interval = interval
-        self.period_start = period_start
-        self.period_end = period_end
-        self.launchedAt = datetime.now()
-        self.dataset = Dataset().create(
-            data={'exchange': '/api/exchanges/'+self.exchange.name.lower(), 'periodStart': self.period_start, 'periodEnd': self.period_end,
-                  'candleSize': 60,
-                  'currency': '/api/currencies/'+self.exchange.currency.lower(), 'asset': '/api/currencies/'+self.exchange.asset.lower()})
 
     def process(self):
-        for price in self.exchange.historical_symbol_ticker_candle(self.period_start, self.period_end, self.interval):
-            print(price.create({'dataset': '/api/datasets/'+self.dataset.uuid}))
-
-        execution_time = datetime.now() - self.launchedAt
-        print('Execution time: ' + str(execution_time.total_seconds()) + ' seconds')
-        sys.exit(0)
+        print(f"Importing data for {self.exchange.get_symbol()} from {self.period_start} to {self.period_end}")
+        print("Import functionality not implemented yet.")
