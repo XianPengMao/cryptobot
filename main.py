@@ -5,9 +5,12 @@ import signal
 import sys
 import threading
 from decouple import config
+import matplotlib.pyplot as plt
+import pandas as pd
 
 from services.backtest import Backtest
 from services.importer import Importer
+from services.plotter import Plotter
 
 exchange_name = config('EXCHANGE')
 available_exchanges = config('AVAILABLE_EXCHANGES').split(',')
@@ -65,7 +68,23 @@ elif mode == 'backtest':
         )
     )
     backtest = Backtest(exchange, period_start, period_end)
-    backtest.run()
+    results = backtest.run()
+    
+    # 添加调试信息
+    print("Backtest results type:", type(results))
+    if results is not None:
+        print("Results shape:", results.shape)
+        print("Results columns:", results.columns.tolist())
+    else:
+        print("Warning: Backtest results is None!")
+    
+    # 确保结果不为空
+    if results is not None:
+        plotter = Plotter(exchange.get_symbol())
+        plotter.plot_backtest_results(results)
+    else:
+        print("Error: No backtest results available for plotting")
+    
     sys.exit(0)
 
 elif mode == 'import':

@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import random
+import pandas as pd
 from exchanges.exchange import Exchange
 from services.chart import Chart
 
@@ -18,6 +19,9 @@ class Backtest:
         current_time = self.period_start
         base_price = 50000.0  # 起始价格
         
+        # 创建列表存储结果数据
+        results_data = []
+        
         while current_time <= self.period_end:
             # 生成一个随机价格变动（-1% 到 +1%）
             price_change = random.uniform(-0.01, 0.01)
@@ -28,6 +32,14 @@ class Backtest:
             
             # 添加数据到图表
             self.chart.add_price(current_time, current_price, volume)
+            
+            # 存储结果数据
+            results_data.append({
+                'timestamp': current_time,
+                'close': current_price,  # 使用 'close' 而不是 'price'
+                'volume': volume,
+                'signal': 0  # 默认无信号
+            })
             
             # 打印当前时间和价格
             print(f"{current_time}: {self.exchange.get_symbol()} price = {current_price:.2f}")
@@ -51,3 +63,18 @@ class Backtest:
             self.exchange.get_symbol(),
             f"backtest_{self.exchange.get_symbol()}_{self.period_start.strftime('%Y%m%d')}.html"
         )
+        
+        # 将结果转换为DataFrame
+        df = pd.DataFrame(results_data)
+        
+        # 生成简单的交易信号（示例：当价格高于移动平均线时买入）
+        df['MA20'] = df['close'].rolling(window=20).mean()
+        df['signal'] = 0
+        df.loc[df['close'] > df['MA20'], 'signal'] = 1
+        df.loc[df['close'] < df['MA20'], 'signal'] = -1
+        
+        # 计算收益率和累计收益
+        df['returns'] = df['close'].pct_change()
+        df['cumulative_returns'] = (1 + df['returns']).cumprod() * 100 - 100
+        
+        return df
